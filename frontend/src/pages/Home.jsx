@@ -13,21 +13,17 @@ function Home() {
   const [project, setProject] = useState([]);
   const [skill, setSkill] = useState([]);
 
+  const url = "https://portfolio-backend-1bch.onrender.com";
+  // http://localhost:5002
   const getContent = async () => {
     try {
-      const aboutRes = await axios.get(
-        "http://localhost:5002/api/content/about"
-      );
+      const aboutRes = await axios.get(`${url}/api/content/about`);
       setAbout(aboutRes.data[0]);
 
-      const projectRes = await axios.get(
-        "http://localhost:5002/api/content/project"
-      );
+      const projectRes = await axios.get(`${url}/api/content/project`);
       setProject(projectRes.data);
 
-      const skillRes = await axios.get(
-        "http://localhost:5002/api/content/skill"
-      );
+      const skillRes = await axios.get(`${url}/api/content/skill`);
       setSkill(skillRes.data);
     } catch (error) {
       console.log(error);
