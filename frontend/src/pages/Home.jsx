@@ -162,18 +162,19 @@ function Home() {
                   <p className="text-gray-600 mb-6">
                     <span className="font-semibold">Tools:</span> {p.tools}
                   </p>
-                  <div className="flex flex-wrap gap-3 mt-auto">
+                  <div className="flex flex-wrap mt-auto">
                     {p.git && (
                       <a
                         href={p.git}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-300"
+                        className="w-full text-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-700 text-white font-semibold rounded-lg shadow-md hover:from-gray-600 hover:to-gray-800 transform hover:scale-105 transition-all duration-300"
                       >
                         GitHub
                       </a>
                     )}
-                    <button
+
+                    {/* <button
                       className={`px-4 py-2 text-white font-semibold rounded-lg shadow-md transition-all duration-300 ${
                         p.demo
                           ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 transform hover:scale-105 cursor-pointer"
@@ -182,7 +183,7 @@ function Home() {
                       onClick={() => p.demo && window.open(p.demo, "_blank")}
                     >
                       Live Demo
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>
