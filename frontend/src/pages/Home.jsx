@@ -51,7 +51,7 @@ function Home() {
           className="text-xl sm:text-4xl md:text-2xl font-bold text-gray-900"
           data-aos="fade-down"
         >
-          Hi! I am {about?.name} 👋
+          Hi! I am {about?.name}
         </h1>
         <p
           className="text-lg sm:text-xl md:text-4xl text-gray-600 "
@@ -98,13 +98,13 @@ function Home() {
           About Me
         </h1>
         <p
-          className="text-base sm:text-lg md:text-xl mb-4 leading-relaxed"
+          className="text-base sm:text-lg md:text-xl mb-4 leading-relaxed text-center"
           data-aos="fade-right"
         >
           {about.bio}
         </p>
         <p
-          className="text-base sm:text-lg md:text-xl mb-8 leading-relaxed"
+          className="text-base sm:text-lg md:text-xl mb-8 leading-relaxed text-center"
           data-aos="fade-left"
           data-aos-delay="200"
         >
