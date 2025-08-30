@@ -7,12 +7,13 @@ import { CiMail } from "react-icons/ci";
 import "./Home.css";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import Loader from "../component/Loader.jsx";
 
 function Home() {
   const [about, setAbout] = useState({});
   const [project, setProject] = useState([]);
   const [skill, setSkill] = useState([]);
-
+  const [loading, setLoading] = useState(true);
   const url = "https://portfolio-backend-1bch.onrender.com";
   // http://localhost:5002
   const getContent = async () => {
@@ -27,6 +28,8 @@ function Home() {
       setSkill(skillRes.data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,9 +42,20 @@ function Home() {
     });
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-blue-500 animate-ping"></div>
+          <div className="absolute top-0 left-0 w-16 h-16 rounded-full bg-blue-700 opacity-75"></div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div>
       {/* Top Section */}
+
       <section className="topSection flex flex-col items-center gap-8 px-6 sm:px-10 md:px-20 lg:px-40 py-16 md:py-24 text-center bg-gradient-to-b from-white to-gray-50">
         <h1
           className="text-xl sm:text-4xl md:text-2xl font-bold text-gray-900"
