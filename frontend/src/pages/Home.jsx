@@ -8,6 +8,8 @@ import "./Home.css";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Loader from "../component/Loader.jsx";
+import Navbar from "../component/NavBar.jsx";
+import FluidCanvas from "../canvas/FluidCanvas.jsx";
 
 function Home() {
   const [about, setAbout] = useState({});
@@ -56,15 +58,18 @@ function Home() {
     <div>
       {/* Top Section */}
 
-      <section className="topSection flex flex-col items-center gap-8 px-6 sm:px-10 md:px-20 lg:px-40 py-16 md:py-24 text-center bg-gradient-to-b from-white to-gray-50">
+      {/* bg-gradient-to-b from-white to-gray-50 */}
+      <section className="topSection relative flex flex-col items-center gap-8 px-6 sm:px-10 md:px-20 lg:px-40 py-16 md:pb-40 md:pt-8 text-center  ">
+        <Navbar />
+        {/* <FluidCanvas /> */}
         <h1
-          className="text-xl sm:text-4xl md:text-2xl font-bold text-gray-900"
+          className="text-xl sm:text-4xl md:text-2xl text-gray-900"
           data-aos="fade-down"
         >
-          Hi! I am {about?.name}
+          Hey! I am {about?.name}
         </h1>
         <p
-          className="text-lg sm:text-xl md:text-4xl text-gray-600 "
+          className="text-lg sm:text-xl md:text-4xl font-bold  text-gray-600 "
           data-aos="fade-up"
           data-aos-delay="200"
         >
@@ -223,7 +228,7 @@ function Home() {
                 data-aos="flip-left"
                 data-aos-delay={idx * 100}
               >
-                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2 text-center">
                   {s.category}
                 </h2>
                 <div className="flex flex-wrap gap-2 justify-center">

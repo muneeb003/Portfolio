@@ -1,146 +1,183 @@
 import React, { useEffect, useRef } from "react";
-import bitmoji from "./bitmoji.png"; // <-- replace with your image path
-
-/**
- * MemojiTiltCorrected
- * - Keeps image centered
- * - Tilts (3D) toward cursor direction using rotate3d(axisX, axisY, 0, angle)
- * - Smooth spring-like interpolation for natural motion
- *
- * Props you can tweak:
- *  - size: px width of the image
- *  - maxTilt: max degrees of tilt (18 is a balanced default)
- *  - easing: smoothing factor (0.05 slow/floaty, 0.12 snappier)
- */
-export default function MemojiTiltCorrected({
-  size = 220,
-  maxTilt = 18,
-  easing = 0.09,
-}) {
-  const wrapperRef = useRef(null);
-  const imgRef = useRef(null);
-  const rafRef = useRef(null);
-
-  // persistent animation state
-  const current = useRef({ ax: 0, ay: 0, angle: 0 });
-  const target = useRef({ ax: 0, ay: 0, angle: 0 });
+import "./style.css";
+import * as THREE from "three";
+import { displayShader, vertexShader, fluidShader } from "./Shaders.js";
+function FluidCanvas() {
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    const img = imgRef.current;
-    if (!img) return;
-
-    // utility
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
-    const onPointerMove = (e) => {
-      const x = e.clientX ?? (e.touches && e.touches[0].clientX);
-      const y = e.clientY ?? (e.touches && e.touches[0].clientY);
-      if (x == null || y == null) return;
-
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const cx = w / 2;
-      const cy = h / 2;
-
-      // vector from center to cursor
-      let dx = x - cx;
-      let dy = y - cy;
-
-      // normalize to [-1,1] (relative to half-dimensions)
-      const nx = clamp(dx / (w / 2), -1, 1);
-      const ny = clamp(dy / (h / 2), -1, 1);
-
-      // magnitude (0..~1.414) -> clamp to 1
-      const magnitude = Math.min(1, Math.hypot(nx, ny));
-
-      // axis perpendicular to the direction vector (so we rotate "toward" the cursor)
-      // axis = (-ny, nx)  (note: we don't set z-axis)
-      let ax = -ny;
-      let ay = nx;
-
-      // normalize axis (only if non-zero)
-      const len = Math.hypot(ax, ay);
-      if (len > 0.0001) {
-        ax /= len;
-        ay /= len;
-      } else {
-        ax = 0;
-        ay = 0;
-      }
-
-      // target angle proportional to distance from center
-      const angle = magnitude * maxTilt; // degrees
-
-      // set targets
-      target.current.ax = ax;
-      target.current.ay = ay;
-      target.current.angle = angle;
+    const config = {
+      brushSize: 15.0,
+      brushStrength: 0.5,
+      distortionAmount: 1.5,
+      fluidDecay: 0.98,
+      trailLength: 0.8,
+      stopDecay: 0.85,
+      color1: "#e6fffb",
+      color2: "#c9a7c4ff",
+      color3: "#868eadff",
+      color4: "#c9efff",
+      colorIntensity: 1.0,
+      softness: 2.0,
     };
 
-    const onPointerLeave = () => {
-      // reset gently to neutral
-      target.current.ax = 0;
-      target.current.ay = 0;
-      target.current.angle = 0;
-    };
-
-    // animation loop — lerp current values toward target values
-    const tick = () => {
-      current.current.ax += (target.current.ax - current.current.ax) * easing;
-      current.current.ay += (target.current.ay - current.current.ay) * easing;
-      current.current.angle +=
-        (target.current.angle - current.current.angle) * easing;
-
-      // apply rotate3d using current axis and angle.
-      // Keep wrapper centered via translate; here we only change rotation.
-      const ax = current.current.ax.toFixed(4);
-      const ay = current.current.ay.toFixed(4);
-      const a = current.current.angle.toFixed(3);
-
-      img.style.transform = `rotate3d(${ax}, ${ay}, 0, ${a}deg)`;
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    // set base styles on wrapper & img
-    const wrapper = wrapperRef.current;
-    if (wrapper) {
-      wrapper.style.position = "fixed";
-      wrapper.style.top = "50%";
-      wrapper.style.left = "50%";
-      wrapper.style.transform = "translate(-50%,-50%)";
-      wrapper.style.perspective = "1200px";
-      wrapper.style.zIndex = 1000;
-      wrapper.style.pointerEvents = "none";
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      return [r, g, b];
     }
 
-    img.style.width = `${size}px`;
-    img.style.height = "auto";
-    img.style.transformOrigin = "50% 50%";
-    img.style.willChange = "transform";
-    img.style.pointerEvents = "none";
-    img.style.userSelect = "none";
+    // --- Setup Three.js
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    containerRef.current.appendChild(renderer.domElement);
 
-    // pointer events (covers mouse + touch)
-    window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("pointerleave", onPointerLeave);
-    window.addEventListener("pointercancel", onPointerLeave);
+    const fluidTarget1 = new THREE.WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+      }
+    );
 
-    // start
-    rafRef.current = requestAnimationFrame(tick);
+    const fluidTarget2 = fluidTarget1.clone();
+    let currentFluidTarget = fluidTarget1;
+    let previousFluidTarget = fluidTarget2;
+    let frameCount = 0;
 
-    // cleanup
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerleave", onPointerLeave);
-      window.removeEventListener("pointercancel", onPointerLeave);
+    // Fluid shader
+    const fluidMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        iTime: { value: 0 },
+        iResolution: {
+          value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+        },
+        iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
+        iFrame: { value: 0 },
+        iPreviousFrame: { value: null },
+        uBrushSize: { value: config.brushSize },
+        uBrushStrength: { value: config.brushStrength },
+        uFluidDecay: { value: config.fluidDecay },
+        uTrailLength: { value: config.trailLength },
+        uStopDecay: { value: config.stopDecay },
+      },
+      vertexShader,
+      fragmentShader: fluidShader,
+    });
+
+    // Display shader
+    const displayMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        iTime: { value: 0 },
+        iResolution: {
+          value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+        },
+        iFluid: { value: null },
+        uDistortionAmount: { value: config.distortionAmount },
+        uColor1: { value: new THREE.Vector3(...hexToRgb(config.color1)) },
+        uColor2: { value: new THREE.Vector3(...hexToRgb(config.color2)) },
+        uColor3: { value: new THREE.Vector3(...hexToRgb(config.color3)) },
+        uColor4: { value: new THREE.Vector3(...hexToRgb(config.color4)) },
+        uColorIntensity: { value: config.colorIntensity },
+        uSoftness: { value: config.softness },
+      },
+      vertexShader,
+      fragmentShader: displayShader,
+    });
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const fluidPlane = new THREE.Mesh(geometry, fluidMaterial);
+    const displayPlane = new THREE.Mesh(geometry, displayMaterial);
+
+    // Mouse interaction
+    let mouseX = 0,
+      mouseY = 0,
+      prevMouseX = 0,
+      prevMouseY = 0,
+      lastMoveTime = 0;
+
+    const handleMouseMove = (e) => {
+      const rect = containerRef.current.getBoundingClientRect();
+      prevMouseX = mouseX;
+      prevMouseY = mouseY;
+      mouseX = e.clientX - rect.left;
+      mouseY = rect.height - (e.clientY - rect.top);
+      lastMoveTime = performance.now();
+
+      fluidMaterial.uniforms.iMouse.value.set(
+        mouseX,
+        mouseY,
+        prevMouseX,
+        prevMouseY
+      );
     };
-  }, [size, maxTilt, easing]);
 
-  return (
-    <div ref={wrapperRef}>
-      <img ref={imgRef} src={bitmoji} alt="avatar" />
-    </div>
-  );
+    const handleMouseLeave = () => {
+      fluidMaterial.uniforms.iMouse.value.set(0, 0, 0, 0);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const time = performance.now() * 0.001;
+      fluidMaterial.uniforms.iTime.value = time;
+      displayMaterial.uniforms.iTime.value = time;
+      fluidMaterial.uniforms.iFrame.value = frameCount;
+
+      if (performance.now() - lastMoveTime > 100) {
+        fluidMaterial.uniforms.iMouse.value.set(0, 0, 0, 0);
+      }
+
+      fluidMaterial.uniforms.iPreviousFrame.value = previousFluidTarget.texture;
+      renderer.setRenderTarget(currentFluidTarget);
+      renderer.render(fluidPlane, camera);
+
+      displayMaterial.uniforms.iFluid.value = currentFluidTarget.texture;
+      renderer.setRenderTarget(null);
+      renderer.render(displayPlane, camera);
+
+      [currentFluidTarget, previousFluidTarget] = [
+        previousFluidTarget,
+        currentFluidTarget,
+      ];
+      frameCount++;
+    }
+
+    animate();
+
+    // Resize handler
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      renderer.setSize(width, height);
+      fluidMaterial.uniforms.iResolution.value.set(width, height);
+      displayMaterial.uniforms.iResolution.value.set(width, height);
+      fluidTarget1.setSize(width, height);
+      fluidTarget2.setSize(width, height);
+      frameCount = 0;
+    };
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      renderer.dispose();
+      fluidTarget1.dispose();
+      fluidTarget2.dispose();
+    };
+  }, []);
+  return <div ref={containerRef} className="gradient-canvas"></div>;
 }
+
+export default FluidCanvas;
