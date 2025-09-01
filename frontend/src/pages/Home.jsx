@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import Map from "../component/Map.jsx";
 import MemojiTiltCorrected from "./MemojiTiltCorrected.jsx";
 import { FaLinkedinIn, FaGithub } from "react-icons/fa";
 import { CiMail } from "react-icons/ci";
@@ -59,7 +59,7 @@ function Home() {
       {/* Top Section */}
 
       {/* bg-gradient-to-b from-white to-gray-50 */}
-      <section className="topSection relative flex flex-col items-center gap-8 px-6 sm:px-10 md:px-20 lg:px-40 py-16 md:pb-40 md:pt-8 text-center  ">
+      <section className="topSection relative flex flex-col items-center gap-8 px-6 sm:px-10 md:px-20 lg:px-40 py-16 md:pb-40 md:pt-8 text-center  bg-gradient-to-b from-white to-gray-50 ">
         <Navbar />
         {/* <FluidCanvas /> */}
         <h1
@@ -251,10 +251,11 @@ function Home() {
       {/* Contact Section */}
       <section
         id="contact"
-        className="contact py-16 bg-gray-100 text-gray-900"
+        className="contact flex flex-col md:flex-row items-center justify-between gap-10 py-16 bg-gray-100 text-gray-900"
         data-aos="fade-up"
       >
-        <div className="container mx-auto px-6 md:px-12 text-center">
+        {/* Left Side - Text + Icons */}
+        <div className="flex-[2] px-6 md:px-12 text-center md:text-left">
           <h1
             className="text-4xl md:text-5xl font-bold mb-4"
             data-aos="fade-down"
@@ -269,7 +270,7 @@ function Home() {
             Let's Work Together
           </p>
           <p
-            className="mb-12 max-w-xl mx-auto text-gray-600"
+            className="mb-12 max-w-xl mx-auto md:mx-0 text-gray-600"
             data-aos="fade-up"
             data-aos-delay="200"
           >
@@ -277,7 +278,7 @@ function Home() {
             full-time opportunities.
           </p>
 
-          <div className="contact-info flex justify-center gap-6 md:gap-8 text-3xl md:text-4xl">
+          <div className="contact-info flex justify-center md:justify-start gap-6 md:gap-8 text-3xl md:text-4xl">
             <a
               href={`mailto:${about.email}`}
               className="bg-white p-5 rounded-full shadow-lg hover:bg-blue-600 hover:text-white transition transform hover:-translate-y-1 hover:scale-110"
@@ -307,6 +308,11 @@ function Home() {
             </a>
           </div>
         </div>
+
+        {/* Right Side - Map */}
+        <div className="w-full h-[300px] md:w-[400px] md:h-[400px] shadow-lg rounded-lg overflow-hidden md:mr-10">
+          <Map />
+        </div>
       </section>
 
       {/* Footer */}
@@ -323,10 +329,10 @@ function Home() {
 
           <div className="flex gap-6 mb-4 md:mb-0">
             <a
-              href="#contact"
+              href="#about"
               className="hover:text-white transition transform hover:-translate-y-1"
             >
-              Contact
+              About
             </a>
             <a
               href="#projects"
@@ -335,10 +341,10 @@ function Home() {
               Projects
             </a>
             <a
-              href="#about"
+              href="#skills"
               className="hover:text-white transition transform hover:-translate-y-1"
             >
-              About
+              Skills
             </a>
           </div>
 
